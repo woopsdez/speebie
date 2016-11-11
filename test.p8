@@ -34,21 +34,7 @@ player.anim = {
     wait = 16,
 }
 
-item = {}
-item.x = 16
-item.y = 0
-item.w = 8
-item.h = 8
-item.speed = 1
-item.i = 1
-item.state = "dropping"
-item.sprno = {145, 146, 147, 148}
-item.anim = {
-    sprs = {item.sprno[1], 144},
-    curr = 1,
-    cnt = 1,
-    wait = 2,
-}
+items = {}
 
 explosion = {}
 explosion.w = 16
@@ -205,48 +191,67 @@ function update_player()
     end
 end
     
+function spawn_item()
+    if flr(rnd(49)) == 0 then
+        add(items, make_item())
+    end
+end
+
 function update_game()
     update_player()
-    update_item(item)
+    foreach(items, function(item) update_item(item) end)
+    spawn_item()
 end
 
-function make_item(t)
-    t.i = flr(rnd(4)+1)
-    t.x = (rnd(108) + 8)
-    t.speed = rnd(8) + 1 
+function make_item()
+    local item = {}
+    item.type = flr(rnd(4)+1)
+    item.speed = rnd(8) + 1
+    item.x = rnd(108) + 8
+    item.y = 0
+    item.w = 8
+    item.h = 8
+    item.state = "dropping"
+    item.sprs = {145, 146, 147, 148}
+    item.anim = {
+        sprs = {item.sprs[1], 144},
+        curr = 1,
+        cnt = 1,
+        wait = 2,
+    }
+    return item
 end
 
-function draw_item(t)
+function draw_item(item)
     if item.state == "dropping" then
-        heighlight(t.sprno[t.i], t.x, t.y, col)
+        heighlight(item.sprs[item.type], item.x, item.y, col)
     elseif item.state == "break" then
-        item.anim.sprs[1] = t.sprno[t.i]
+        item.anim.sprs[1] = item.sprs[item.type]
         heighlight(item.anim.sprs[item.anim.curr], item.x, item.y, col)
         animate(item.anim)
         spr(explosion.anim.sprs[explosion.anim.curr], item.x, 100-3, 2, 2)
         animate(explosion.anim)
     elseif item.state == "break-end" then
-        heighlight(t.sprno[t.i], t.x, t.y, col)
+        heighlight(item.sprs[item.type], item.x, item.y, col)
     end
 end
 
-function update_item(t)
-    if t.state == "dropping" then
-        t.y = t.y + t.speed
-        if t.y > 100 then
+function update_item(item)
+    if item.state == "dropping" then
+        item.y = item.y + item.speed
+        if item.y > 100 then
             sfx(10)
             gs = time()
-            t.state = "break"
+            item.state = "break"
         end
-    elseif t.state == "break" then
+    elseif item.state == "break" then
         local spendsec = time() - gs
         if spendsec > 1 then
-            t.state = "break-end"
+            item.state = "break-end"
         end        
-    elseif t.state == "break-end" then
-        t.y = 1 
-        make_item(t)
-        t.state = "dropping"
+    elseif item.state == "break-end" then
+        item.y = 1
+        del(items, item)
     end
 end
 
@@ -277,14 +282,13 @@ function draw_game()
         map(0,0, 0,0, 16,16)
         draw_menu()
         draw_player()
-        draw_item(item)
+        foreach(items, function(item) draw_item(item) end)
         map(16,0, 0,0, 16,16)
     end 
 end
 
 function init_game()
     srand(flr(time()))
-    make_item(item)
     music(2)
 end
 
