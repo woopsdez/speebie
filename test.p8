@@ -283,6 +283,8 @@ function draw_game()
 end
 
 function init_game()
+    srand(flr(time()))
+    make_item(item)
     music(2)
 end
 
