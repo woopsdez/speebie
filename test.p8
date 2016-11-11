@@ -24,33 +24,41 @@ player.flip_x = false
 player.flag = 0
 player.move = 1
 player.state = "walk"
-player.def = {f = {200, 232}}
-player.dmg = {f = {202, 234}}
-player.fly = {f = {204, 206, 236, 238}} 
-player.animcnt = 1
-player.animwait = 16
-player.nowframe = 1
+player.def = {200, 232}
+player.dmg = {202, 234}
+player.fly = {204, 206, 236, 238}
+player.anim = {
+    sprs = player.def,
+    curr = 1,
+    cnt = 1,
+    wait = 16,
+}
 
 item = {}
 item.x = 16
 item.y = 0
 item.w = 8
 item.h = 8
-item.sprno = {145, 146, 147, 148}
-item.name = "beer"
 item.speed = 1
-item.animcnt = 1
-item.nowframe = 1
 item.i = 1
-item.anim = {f = {item.sprno[item.nowframe], 144}}
 item.state = "dropping"
+item.sprno = {145, 146, 147, 148}
+item.anim = {
+    sprs = {item.sprno[1], 144},
+    curr = 1,
+    cnt = 1,
+    wait = 2,
+}
 
 explosion = {}
 explosion.w = 16
 explosion.h = 16
-explosion.animcnt = 1
-explosion.nowframe = 1
-explosion.anim = {f = {160,162,164,166,168}}
+explosion.anim = {
+    sprs = {160,162,164,166,168},
+    curr = 1,
+    cnt = 1,
+    wait = 2,
+}
 
 title_initiarized = false
 game_initiarized = false
@@ -134,32 +142,32 @@ function update_title()
     end
 end
 
-function animation(f,wait) 
-    spr(f[player.nowframe], player.x, player.y, player.w, player.h, player.flip_x)
-
-    if player.animcnt >= wait then
-        if count(f) > player.nowframe then
-            player.nowframe = player.nowframe + 1
+function animate(anim) 
+    if anim.cnt >= anim.wait then
+        if count(anim.sprs) > anim.curr then
+            anim.curr = anim.curr + 1
         else
-            player.nowframe = 1
+            anim.curr = 1
         end
-        player.animcnt = 1
+        anim.cnt = 1
     else
-        player.animcnt = player.animcnt + 1
+        anim.cnt = anim.cnt + 1
     end
 end
 
 function draw_player()
     if player.state == "walk" then
-        animation(player.def.f,16)
+        player.anim.sprs = player.def
         sfx(-1,1,6)
     elseif player.state == "cry" then
-        animation(player.dmg.f,16)
+        player.anim.sprs = player.dmg
         sfx(-1,1,6)
     elseif player.state == "fly" then
-        animation(player.fly.f,4)
+        player.anim.sprs = player.fly
         sfx(6,1,1)
     end
+    spr(player.anim.sprs[player.anim.curr], player.x, player.y, player.w, player.h, player.flip_x)
+    animate(player.anim)
 end
 
 function update_player()
@@ -179,11 +187,6 @@ function update_player()
             flip_player()
         end
     end
-end
-    
-function update_game()
-    update_player(player.flip_x)
-    update_item(item)
 
     if btnp(0) and btn(0) then
         flip_player()
@@ -201,73 +204,49 @@ function update_game()
         player.state = "fly"
     end
 end
-
-function explosion_item()
-    spr(explosion.anim.f[explosion.nowframe], item.x, 100-3, 2, 2)
-
-    if explosion.animcnt >= 4 then
-        if count(explosion.anim.f) > explosion.nowframe then
-            explosion.nowframe = explosion.nowframe + 1
-        else
-            explosion.nowframe = 1
-        end
-        explosion.animcnt = 1
-    else
-        explosion.animcnt = explosion.animcnt + 1
-    end
+    
+function update_game()
+    update_player()
+    update_item(item)
 end
 
 function make_item(t)
-    item.i = flr(rnd(4)+1)
+    t.i = flr(rnd(4)+1)
     t.x = (rnd(108) + 8)
     t.speed = rnd(8) + 1 
-end
-
-function blink_item()
-    heighlight(item.anim.f[item.nowframe], item.x, item.y, col)
-
-    if item.animcnt >= 4 then
-        if count(item.anim.f) > item.nowframe then
-            item.nowframe = item.nowframe + 1
-        else
-            item.nowframe = 1
-        end
-        item.animcnt = 1
-    else
-        item.animcnt = item.animcnt + 1
-    end
 end
 
 function draw_item(t)
     if item.state == "dropping" then
         heighlight(t.sprno[t.i], t.x, t.y, col)
     elseif item.state == "break" then
-        item.anim.f[1] = t.sprno[t.i]
-        blink_item()
-        explosion_item()
+        item.anim.sprs[1] = t.sprno[t.i]
+        heighlight(item.anim.sprs[item.anim.curr], item.x, item.y, col)
+        animate(item.anim)
+        spr(explosion.anim.sprs[explosion.anim.curr], item.x, 100-3, 2, 2)
+        animate(explosion.anim)
     elseif item.state == "break-end" then
         heighlight(t.sprno[t.i], t.x, t.y, col)
     end
 end
 
 function update_item(t)
-    if item.state == "dropping" then
+    if t.state == "dropping" then
         t.y = t.y + t.speed
         if t.y > 100 then
             sfx(10)
             gs = time()
-            item.state = "break"
+            t.state = "break"
         end
-    elseif item.state == "break" then
-        explosion_item()
+    elseif t.state == "break" then
         local spendsec = time() - gs
         if spendsec > 1 then
-            item.state = "break-end"
+            t.state = "break-end"
         end        
-    elseif item.state == "break-end" then
+    elseif t.state == "break-end" then
         t.y = 1 
         make_item(t)
-        item.state = "dropping"
+        t.state = "dropping"
     end
 end
 
