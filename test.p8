@@ -14,36 +14,37 @@ blk.wait = 16
 times = {nt = time()}
 
 -- variables player
-player = {}
-player.x = 10
-player.y = 98
-player.w = 2
-player.h = 2
-player.r = 1
-player.flip_x = false
-player.flag = 0
-player.move = 1
-player.state = "walk"
-player.def = {200, 232}
-player.dmg = {202, 234}
-player.fly = {204, 206, 236, 238}
-player.anim = {
-    sprs = player.def,
-    curr = 1,
-    cnt = 1,
-    wait = 16,
+player = {
+    x = 10,
+    y = 98,
+    w = 2,
+    h = 2,
+    dir = 1,
+    flip_x = false,
+    move = 1,
+    state = "walk",
+    def = {200, 232},
+    dmg = {202, 234},
+    fly = {204, 206, 236, 238},
+    anim = {
+        sprs = def,
+        curr = 1,
+        cnt = 1,
+        wait = 16,
+    },
 }
 
 items = {}
 
-explosion = {}
-explosion.w = 16
-explosion.h = 16
-explosion.anim = {
-    sprs = {160,162,164,166,168},
-    curr = 1,
-    cnt = 1,
-    wait = 2,
+explosion = {
+    w = 16,
+    h = 16,
+    anim = {
+        sprs = {160,162,164,166,168},
+        curr = 1,
+        cnt = 1,
+        wait = 2,
+    },
 }
 
 title_initiarized = false
@@ -62,7 +63,7 @@ function alignnumber(v)
 end
 
 function flip_player()
-    player.r = player.r * -1
+    player.dir = player.dir * -1
     player.flip_x = not player.flip_x
 end
 
@@ -158,7 +159,7 @@ end
 
 function update_player()
     if player.state == "walk" then
-        player.x = player.x + player.move * player.r
+        player.x = player.x + player.move * player.dir
         if player.x >= 100 or player.x <= 10 then
             flip_player()
         end
@@ -168,7 +169,7 @@ function update_player()
             player.state = "walk"
         end  
     elseif player.state == "fly" then
-        player.x = player.x + 2 * player.r
+        player.x = player.x + 2 * player.dir
         if player.x >= 100 or player.x <= 10 then
             flip_player()
         end
@@ -204,20 +205,22 @@ function update_game()
 end
 
 function make_item()
-    local item = {}
-    item.type = flr(rnd(4)+1)
-    item.speed = rnd(8) + 1
-    item.x = rnd(108) + 8
-    item.y = 0
-    item.w = 8
-    item.h = 8
-    item.state = "dropping"
-    item.sprs = {145, 146, 147, 148}
-    item.anim = {
-        sprs = {item.sprs[1], 144},
-        curr = 1,
-        cnt = 1,
-        wait = 2,
+    local sprs = {145, 146, 147, 148}
+    local item = {
+        type = flr(rnd(4)+1),
+        speed = rnd(8) + 1,
+        x = rnd(108) + 8,
+        y = 0,
+        w = 8,
+        h = 8,
+        state = "dropping",
+        sprs = sprs,
+        anim = {
+            sprs = {sprs[1], 144},
+            curr = 1,
+            cnt = 1,
+            wait = 2,
+        },
     }
     return item
 end
