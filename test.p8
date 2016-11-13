@@ -2,6 +2,12 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
+ITEM_BOMB = 1
+ITEM_HEART = 2
+ITEM_BEER = 3
+ITEM_MILK = 4
+ITEM_MAX = 5
+
 debug_flag = false
 scene = "title"
 
@@ -125,6 +131,7 @@ end
 
 function update_title()   
     if title_isend() then
+        game_initiarized = false
         scene = "game"
     end
 end
@@ -198,16 +205,30 @@ function spawn_item()
     end
 end
 
+function item_and_player(item, player)
+    local dx = player.x - item.x
+    local dy = player.y - item.y
+    if dx * dx + dy * dy < 64 and item.type == ITEM_BOMB then
+        title_initiarized = false
+        scene = "title"
+    end
+end
+
+function collision()
+    foreach(items, function(item) item_and_player(item, player) end)
+end
+
 function update_game()
     update_player()
     foreach(items, function(item) update_item(item) end)
+    collision()
     spawn_item()
 end
 
 function make_item()
     local sprs = {145, 146, 147, 148}
     local item = {
-        type = flr(rnd(4)+1),
+        type = flr(rnd(ITEM_MAX) + 1),
         speed = rnd(8) + 1,
         x = rnd(108) + 8,
         y = 0,
@@ -292,10 +313,12 @@ end
 
 function init_game()
     srand(flr(time()))
+    sfx(-1)
     music(2)
 end
 
 function init_title()
+    sfx(-1)
     music(-1)
 end
 
